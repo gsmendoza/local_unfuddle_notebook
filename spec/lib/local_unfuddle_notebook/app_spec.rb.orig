@@ -40,6 +40,16 @@ module LocalUnfuddleNotebook
       it "should save the connection settings of the notebook" do
         Pow(App.config_path).should_not exist
 
+<<<<<<< HEAD
+        connection_settings = {
+          :subdomain => 'hmsinc',
+          :username => 'gsmendoza',
+          :password => '********',
+          :project_id => 15,
+          :notebook_id => 11
+        }
+=======
+>>>>>>> d92a3a0... App should be able to setup its notebook from the options.
         app = App.new(:command => 'checkout', :options => connection_settings)
         app.init
 

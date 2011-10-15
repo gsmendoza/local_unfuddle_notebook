@@ -12,8 +12,7 @@ module LocalUnfuddleNotebook
 
       case command
       when :checkout
-        init
-        puts "#TODO .notebook.pull"
+        init.notebook #TODO .pull
       when :push
         #notebook.push options.message
       when :pull
@@ -27,6 +26,14 @@ module LocalUnfuddleNotebook
     def init
       Pow(self.class.config_path).write options.to_yaml
       return self
+    end
+
+    def notebook
+      @notebook ||= Notebook.new(notebook_url, options[:username], options[:password])
+    end
+
+    def notebook_url
+      "http://#{options[:subdomain]}.unfuddle.com/api/v1/projects/#{options[:project_id]}/notebooks/#{options[:notebook_id]}"
     end
 
     def parse_args(args)

@@ -1,6 +1,7 @@
 source :rubygems
 
 gem 'pow'
+gem 'rest-client'
 gem 'slop'
 gem 'valuable'
 
