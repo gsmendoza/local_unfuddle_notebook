@@ -10,3 +10,11 @@ VCR.config do |c|
   c.cassette_library_dir = 'fixtures/vcr_cassettes'
   c.stub_with :webmock
 end
+
+Spec::Runner.configure do |config|
+  config.before :each do
+    LocalUnfuddleNotebook::App.stub(:config_path).and_return("tmp/local_unfuddle_notebook.yaml")
+    Pow(LocalUnfuddleNotebook::App.config_path).delete if Pow(LocalUnfuddleNotebook::App.config_path).exists?
+  end
+end
+

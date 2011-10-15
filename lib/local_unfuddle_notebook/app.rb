@@ -3,12 +3,17 @@ module LocalUnfuddleNotebook
     has_value :command
     has_value :options
 
+    def self.config_path
+      ".local_unfuddle_notebook.yaml"
+    end
+
     def execute(args)
       slop = parse_args(args)
 
       case command
       when :checkout
-        #init.notebook.pull
+        init
+        puts "#TODO .notebook.pull"
       when :push
         #notebook.push options.message
       when :pull
@@ -17,6 +22,11 @@ module LocalUnfuddleNotebook
         puts "Invalid command"
         puts slop.help
       end
+    end
+
+    def init
+      Pow(self.class.config_path).write options.to_yaml
+      return self
     end
 
     def parse_args(args)

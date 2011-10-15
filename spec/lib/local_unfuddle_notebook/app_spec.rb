@@ -26,15 +26,22 @@ module LocalUnfuddleNotebook
       end
     end
 
-    describe "execute" do
-      xit "can checkout the notebook" do
-        app = App.new(:args => ['checkout',
-          '--subdomain=hmsinc',
-          '--username=gsmendoza',
-          '--password=********',
-          '--project_id=15',
-          '--notebook_id=11'
-        ])
+    describe "init" do
+      it "should save the connection settings of the notebook" do
+        Pow(App.config_path).should_not exist
+
+        connection_settings = {
+          :subdomain => 'hmsinc',
+          :username => 'gsmendoza',
+          :password => '********',
+          :project_id => 15,
+          :notebook_id => 11
+        }
+        app = App.new(:command => 'checkout', :options => connection_settings)
+        app.init
+
+        Pow(App.config_path).should be_a_file
+        Pow(App.config_path).read.should == connection_settings.to_yaml
       end
     end
   end
