@@ -1,15 +1,13 @@
 module LocalUnfuddleNotebook
   class App < Valuable
-    has_value :args
     has_value :command
     has_value :options
 
-    def execute
-      slop = parse_args
+    def execute(args)
+      slop = parse_args(args)
 
       case command
       when :checkout
-        puts "#TODO"
         #init.notebook.pull
       when :push
         #notebook.push options.message
@@ -21,7 +19,7 @@ module LocalUnfuddleNotebook
       end
     end
 
-    def parse_args
+    def parse_args(args)
       app = self
 
       Slop.parse(args, :help => true) do

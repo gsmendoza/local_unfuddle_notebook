@@ -9,4 +9,6 @@ group :test do
   gem 'guard-rspec'
   gem 'rspec'
   gem 'ruby-debug'
+  gem 'vcr'
+  gem 'webmock'
 end
