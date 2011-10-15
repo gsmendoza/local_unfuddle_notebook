@@ -1,2 +1,6 @@
-tmp/*
+*.gem
+.bundle
 .local_unfuddle_notebook.yaml
+Gemfile.lock
+pkg/*
+tmp/*
