@@ -29,5 +29,6 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency "pow", '~> 0.2.3'
   s.add_runtime_dependency "rest-client", '~> 1.6.3'
   s.add_runtime_dependency "slop", '~> 2.1.0'
+  s.add_runtime_dependency 'thor', '~> 0.14.6'
   s.add_runtime_dependency "valuable", '~> 0.8.5'
 end

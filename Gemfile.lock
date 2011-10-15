@@ -5,6 +5,7 @@ PATH
       pow (~> 0.2.3)
       rest-client (~> 1.6.3)
       slop (~> 2.1.0)
+      thor (~> 0.14.6)
       valuable (~> 0.8.5)
 
 GEM
