@@ -1,6 +1,5 @@
 require 'pow'
 require 'rest-client'
-require 'slop'
 require 'thor'
 require 'valuable'
 
