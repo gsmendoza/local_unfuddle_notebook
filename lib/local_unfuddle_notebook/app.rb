@@ -1,40 +1,61 @@
 module LocalUnfuddleNotebook
   class App < Valuable
     has_value :args
+    has_value :command
+    has_value :options
 
     def execute
-      #case options.command
-      #when 'checkout'
+      slop = parse_args
+
+      case command
+      when :checkout
+        puts "#TODO"
         #init.notebook.pull
-      #when 'push'
+      when :push
         #notebook.push options.message
-      #when 'pull'
+      when :pull
         #notebook.pull
-      #else
+      else
+        puts "Invalid command"
         puts slop.help
-      #end
+      end
     end
 
-    def slop
-      @slop ||= Slop.parse(args, :help => true) do
-        banner "Save your unfuddle notebook locally"
+    def parse_args
+      app = self
 
-        #command :checkout do
-          #banner "download remote unfuddle notebook"
-          #on :s, :subdomain, "Unfuddle subdomain", :options => false
-          #on :u, :username, "Unfuddle username", :options => false
-          #on :p, :password, "Unfuddle password", :options => false
-          #on :pid, :project_id, "Unfuddle project id", :options => false
-          #on :nid, :notebook_id, "Unfuddle notebook id", :options => false
-        #end
+      Slop.parse(args, :help => true) do
+        banner "Save your unfuddle notebook locally.\nUsage: lunbook (checkout|push|pull)* (options)*"
+
+        command :checkout do
+          banner "Download remote unfuddle notebook"
+          on :s, :subdomain, "Unfuddle subdomain", true
+          on :u, :username, "Unfuddle username", true
+          on :p, :password, "Unfuddle password", true
+          on :r, :project_id, "Unfuddle project id", true
+          on :n, :notebook_id, "Unfuddle notebook id", true
+
+          execute do |opts, args|
+            app.command = :checkout
+            app.options = opts.to_hash
+          end
+        end
 
         #command :push do
           #banner "upload local copy to remote unfuddle notebook"
           #on :m, :message, "Message", :options => false
+
+          #execute do |opts, args|
+            #notebook.push options.message
+          #end
         #end
 
         #command :pull do
           #banner "update the local copy of your unfuddle notebook"
+
+          #execute do |opts, args|
+            #notebook.pull
+          #end
         #end
       end
     end

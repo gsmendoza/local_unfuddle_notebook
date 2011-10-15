@@ -7,12 +7,27 @@ module LocalUnfuddleNotebook
       app.args.should == ['test']
     end
 
-    describe "slop" do
-      it "should be empty if there are no args" do
+    describe "parse_args" do
+      it "should have the help option if there are no args" do
         app = App.new(:args => [])
-        app.slop.options.should have(1).option
-        option = app.slop.options.first
+        app.parse_args.options.should have(1).option
+        option = app.parse_args.options.first
         option.long_flag.should == 'help'
+      end
+
+      it "should set the command and options on checkout" do
+        app = App.new(:args => ['checkout',
+          '--subdomain=hmsinc',
+          '--username=gsmendoza',
+          '--password=********',
+          '--project_id=15',
+          '--notebook_id=11'
+        ])
+
+        app.parse_args
+
+        app.command.should == :checkout
+        app.options[:subdomain].should == 'hmsinc'
       end
     end
   end
