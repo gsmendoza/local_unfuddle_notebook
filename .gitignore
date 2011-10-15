@@ -2,5 +2,6 @@
 .bundle
 .local_unfuddle_notebook.yaml
 Gemfile.lock
+files/*
 pkg/*
 tmp/*
