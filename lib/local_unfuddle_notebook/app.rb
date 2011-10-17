@@ -11,6 +11,11 @@ module LocalUnfuddleNotebook
     def checkout
       Notebook.init(options).pull
     end
+
+    desc "pull", "Update the local copy of your unfuddle notebook"
+    def pull
+      Notebook.local.pull
+    end
   end
 end
 

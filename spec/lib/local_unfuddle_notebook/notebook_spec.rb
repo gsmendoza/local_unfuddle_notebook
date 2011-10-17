@@ -48,6 +48,28 @@ module LocalUnfuddleNotebook
         Pow(Notebook.local_pages_path).should exist
         Pow(Notebook.local_pages_path).files.should have(1).file
       end
+
+      it "should clear the local pages page before downloading the pages from remote" do
+        Pow(Notebook.local_pages_path).create_directory do
+          Pow("1-title.yaml").create_file
+        end
+        Pow(Notebook.local_pages_path).files.should have(1).file
+
+        notebook = Notebook.with_connection_settings(connection_settings)
+
+        no_pages_in_response_body = <<-EOS
+        <?xml version="1.0" encoding="UTF-8"?>
+        <pages type="array">
+        </pages>
+        EOS
+
+        stub_request(:get, notebook.url_with_basic_auth('pages/unique')).
+          to_return(:body => no_pages_in_response_body)
+
+        notebook.pull
+
+        Pow(Notebook.local_pages_path).should_not exist
+      end
     end
 
     describe "remote_pages" do

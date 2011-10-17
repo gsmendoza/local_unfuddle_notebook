@@ -32,6 +32,10 @@ module LocalUnfuddleNotebook
     end
 
     def pull
+      if Pow(self.class.local_pages_path).exists?
+        Pow(self.class.local_pages_path).delete!
+      end
+
       remote_pages.each do |page|
         page.save
       end
