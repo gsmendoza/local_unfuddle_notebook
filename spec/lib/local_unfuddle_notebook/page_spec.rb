@@ -10,8 +10,7 @@ module LocalUnfuddleNotebook
           :id => 1,
           :title => 'This is a title',
           :body => 'This is a body',
-          :message => 'This is a message',
-          :updated_at => Time.now
+          :message => 'This is a message'
         }
 
         page = Page.new(attributes)
@@ -32,22 +31,43 @@ module LocalUnfuddleNotebook
 
     describe "local_attributes" do
       it "should be the attributes of the page that can be saved locally" do
-        updated_at = Time.now
         attributes = {
           :id => 1,
           :title => 'This is a title',
           :body => 'This is a body',
-          :message => 'This is a message',
-          :updated_at => updated_at
+          :message => 'This is a message'
         }
 
         page = Page.new(attributes)
         page.local_attributes.should == {
+          :id => 1,
           :title => 'This is a title',
-          :body => 'This is a body',
-          :message => 'This is a message',
-          :updated_at => updated_at
+          :body => 'This is a body'
         }
+      end
+    end
+
+    describe "changed?" do
+      it "should be true if the page's local file was updated after the notebook's last pull timestamp" do
+        notebook = Notebook.new('')
+        notebook.last_pulled_at = Time.now
+
+        file = (Pow(Notebook.local_pages_path) / "1-title.yaml").create
+        file.should_receive(:mtime).and_return(notebook.last_pulled_at + 60)
+
+        page = Page.new(:notebook => notebook, :local_file => file)
+        page.should be_changed
+      end
+
+      it "should be false if the page's local file is the same as last pull timestamp" do
+        notebook = Notebook.new('')
+        notebook.last_pulled_at = Time.now
+
+        file = (Pow(Notebook.local_pages_path) / "1-title.yaml").create
+        file.should_receive(:mtime).and_return(notebook.last_pulled_at)
+
+        page = Page.new(:notebook => notebook, :local_file => file)
+        page.should_not be_changed
       end
     end
   end

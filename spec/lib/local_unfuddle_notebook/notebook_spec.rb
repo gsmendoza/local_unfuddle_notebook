@@ -2,34 +2,28 @@ require 'spec_helper'
 
 module LocalUnfuddleNotebook
   describe Notebook do
-    let :connection_settings do
+    let :last_pulled_at do
+      Time.now
+    end
+
+    let :attributes do
       {
         :subdomain => 'hmsinc',
         :username => 'gsmendoza',
         :password => '12345678',
         :project_id => 15,
-        :notebook_id => 11
+        :notebook_id => 11,
+        :last_pulled_at => last_pulled_at
       }
     end
 
-    describe "init" do
-      it "should save the connection settings of the notebook" do
-        Pow(Notebook.connection_settings_path).should_not exist
-
-        notebook = Notebook.init(connection_settings)
-        notebook.should be_a(Notebook)
-
-        Pow(Notebook.connection_settings_path).should be_a_file
-        Pow(Notebook.connection_settings_path).read.should == connection_settings.to_yaml
-      end
-    end
-
-    describe "with_connection_settings(settings)" do
+    describe "with_attributes(settings)" do
       it "should build a new notebook with the given settings" do
-        notebook = Notebook.with_connection_settings(connection_settings)
+        notebook = Notebook.with_attributes(attributes)
         notebook.url.should == "http://hmsinc.unfuddle.com/api/v1/projects/15/notebooks/11"
         notebook.user.should == 'gsmendoza'
         notebook.password.should == '12345678'
+        notebook.last_pulled_at.should == last_pulled_at
       end
     end
 
@@ -37,7 +31,7 @@ module LocalUnfuddleNotebook
       it "should save the notebook pages in the local pages path" do
         Pow(Notebook.local_pages_path).should_not exist
 
-        notebook = Notebook.with_connection_settings(connection_settings)
+        notebook = Notebook.with_attributes(attributes)
 
         stub_request(:get, notebook.url_with_basic_auth('pages/unique')).
           to_return(:body => Pow('spec/fixtures/webmock/unique_pages_with_single_page.xml').read)
@@ -55,7 +49,7 @@ module LocalUnfuddleNotebook
         end
         Pow(Notebook.local_pages_path).files.should have(1).file
 
-        notebook = Notebook.with_connection_settings(connection_settings)
+        notebook = Notebook.with_attributes(attributes)
 
         no_pages_in_response_body = <<-EOS
         <?xml version="1.0" encoding="UTF-8"?>
@@ -70,11 +64,49 @@ module LocalUnfuddleNotebook
 
         Pow(Notebook.local_pages_path).should_not exist
       end
+
+      it "should set the last_pulled_at time of the notebook to now" do
+        time_now = Time.now
+        Time.stub(:now).and_return(time_now)
+
+        notebook = Notebook.with_attributes(attributes)
+        notebook.last_pulled_at = nil
+
+        stub_request(:get, notebook.url_with_basic_auth('pages/unique')).
+          to_return(:body => Pow('spec/fixtures/webmock/unique_pages_with_single_page.xml').read)
+
+        notebook.pull
+        notebook.last_pulled_at.should == time_now
+      end
+
+      it "should save the local attributes of the notebook" do
+        time_now = Time.now
+        Time.stub(:now).and_return(time_now)
+
+        notebook = Notebook.with_attributes(attributes)
+
+        stub_request(:get, notebook.url_with_basic_auth('pages/unique')).
+          to_return(:body => Pow('spec/fixtures/webmock/unique_pages_with_single_page.xml').read)
+
+        notebook.pull
+
+        local_attributes = {
+          :subdomain => 'hmsinc',
+          :username => 'gsmendoza',
+          :password => '12345678',
+          :project_id => 15,
+          :notebook_id => 11,
+          :last_pulled_at => time_now
+        }
+
+        Pow(Notebook.attributes_path).should be_a_file
+        Pow(Notebook.attributes_path).read.should == local_attributes.to_yaml
+      end
     end
 
     describe "remote_pages" do
       it "should be the pages of the notebook from unfuddle" do
-        notebook = Notebook.with_connection_settings(connection_settings)
+        notebook = Notebook.with_attributes(attributes)
 
         response_body = <<-EOS
         <?xml version="1.0" encoding="UTF-8"?>
@@ -112,10 +144,10 @@ module LocalUnfuddleNotebook
       end
     end
 
-    describe "saved_connection_settings" do
+    describe "saved_attributes" do
       it "should get the connection settings from the local connection settings file" do
-        Pow(Notebook.connection_settings_path).should_not exist
-        Notebook.saved_connection_settings.should be_nil
+        Pow(Notebook.attributes_path).should_not exist
+        Notebook.saved_attributes.should be_nil
 
         content = <<-EOS
         --- !map:Thor::CoreExt::HashWithIndifferentAccess
@@ -126,19 +158,80 @@ module LocalUnfuddleNotebook
         password: 12345678
         EOS
 
-        Pow(Notebook.connection_settings_path).write(content)
+        Pow(Notebook.attributes_path).write(content)
 
-        settings = Notebook.saved_connection_settings
+        settings = Notebook.saved_attributes
         settings[:username].should == 'gsmendoza'
       end
     end
 
     describe "url_with_basic_auth(suburl)" do
       it "should be add the user and password to the suburl" do
-        notebook = Notebook.with_connection_settings(connection_settings)
+        notebook = Notebook.with_attributes(attributes)
 
         notebook.url_with_basic_auth('pages/unique').should ==
           "http://gsmendoza:12345678@hmsinc.unfuddle.com/api/v1/projects/15/notebooks/11/pages/unique"
+      end
+    end
+
+    describe "local_attributes" do
+      it "should be the attributes of the notebook intended for saving" do
+        notebook = Notebook.with_attributes(attributes)
+        notebook.last_pulled_at = time_now = Time.now
+
+        notebook.local_attributes.should == {
+          :subdomain => 'hmsinc',
+          :username => 'gsmendoza',
+          :password => '12345678',
+          :project_id => 15,
+          :notebook_id => 11,
+          :last_pulled_at => time_now
+        }
+      end
+    end
+
+    describe "subdomain" do
+      it "should come from the url" do
+        notebook = Notebook.new("http://sub.domain.unfuddle.com")
+        notebook.subdomain.should == "sub.domain"
+      end
+    end
+
+    describe "project_id" do
+      it "should come from the url" do
+        notebook = Notebook.new("http://hmsinc.unfuddle.com/api/v1/projects/15/notebooks/11/pages/unique")
+        notebook.project_id.should == 15
+      end
+    end
+
+    describe "notebook_id" do
+      it "should come from the url" do
+        notebook = Notebook.new("http://hmsinc.unfuddle.com/api/v1/projects/15/notebooks/11/pages/unique")
+        notebook.notebook_id.should == 11
+      end
+    end
+
+    describe "local_pages" do
+      it "should be the pages stored locally" do
+
+        attributes = {
+          :id => 1,
+          :title => 'This is a title',
+          :body => 'This is a body',
+          :message => 'This is a message'
+        }
+        (Pow(Notebook.local_pages_path) / "1-this-is-a-title.yaml").write attributes.to_yaml
+
+        notebook = Notebook.new("url")
+        local_pages = notebook.local_pages
+        local_pages.should have(1).page
+
+        local_page = local_pages.first
+
+        local_page.id.should == 1
+        local_page.notebook.should == notebook
+        local_page.local_file.name(true).should == "1-this-is-a-title.yaml"
+        local_page.title.should == 'This is a title'
       end
     end
   end
