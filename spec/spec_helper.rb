@@ -3,8 +3,10 @@ require 'bundler/setup'
 
 Spec::Runner.configure do |config|
   config.before :each do
-    LocalUnfuddleNotebook::Notebook.stub(:config_path).and_return("tmp/local_unfuddle_notebook.yaml")
-    Pow(LocalUnfuddleNotebook::Notebook.config_path).delete if Pow(LocalUnfuddleNotebook::Notebook.config_path).exists?
+    LocalUnfuddleNotebook::Notebook.stub(:connection_settings_path).and_return("tmp/local_unfuddle_notebook.yaml")
+    if Pow(LocalUnfuddleNotebook::Notebook.connection_settings_path).exists?
+      Pow(LocalUnfuddleNotebook::Notebook.connection_settings_path).delete
+    end
   end
 end
 
