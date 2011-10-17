@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pages type="array">
+ <page>
+    <author-id type="integer">23</author-id>
+    <body>Body
+# Head
+    code
+</body>
+    <body-format>markdown</body-format>
+    <id type="integer">268</id>
+    <message>This is a message.</message>
+    <message-format>markdown</message-format>
+    <notebook-id type="integer">11</notebook-id>
+    <number type="integer">8</number>
+    <title>This is the title.</title>
+    <version type="integer">12</version>
+    <created-at>2011-10-12T08:29:21Z</created-at>
+    <updated-at>2011-10-12T08:29:21Z</updated-at>
+  </page>
+</pages>

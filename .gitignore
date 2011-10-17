@@ -1,7 +1,9 @@
 *.gem
 .bundle
 .local_unfuddle_notebook.yaml
+.geanyprj
 Gemfile.lock
 files/*
+pages/*
 pkg/*
 tmp/*

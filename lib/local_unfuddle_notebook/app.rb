@@ -9,7 +9,7 @@ module LocalUnfuddleNotebook
     method_option :project_id,  :aliases => '-r', :desc => "Unfuddle project id"
     method_option :notebook_id, :aliases => '-n', :desc => "Unfuddle notebook id"
     def checkout
-      Notebook.init(options) #TODO .pull
+      Notebook.init(options).pull
     end
   end
 end
