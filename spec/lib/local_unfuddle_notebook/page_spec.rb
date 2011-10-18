@@ -50,10 +50,10 @@ module LocalUnfuddleNotebook
     describe "changed?" do
       it "should be true if the page's local file was updated after the notebook's last pull timestamp" do
         notebook = Notebook.new('')
-        notebook.last_pulled_at = Time.now
+        notebook.last_updated_at = Time.now
 
         file = (Pow(Notebook.local_pages_path) / "1-title.yaml").create
-        file.should_receive(:mtime).and_return(notebook.last_pulled_at + 60)
+        file.should_receive(:mtime).and_return(notebook.last_updated_at + 60)
 
         page = Page.new(:notebook => notebook, :local_file => file)
         page.should be_changed
@@ -61,13 +61,36 @@ module LocalUnfuddleNotebook
 
       it "should be false if the page's local file is the same as last pull timestamp" do
         notebook = Notebook.new('')
-        notebook.last_pulled_at = Time.now
+        notebook.last_updated_at = Time.now
 
         file = (Pow(Notebook.local_pages_path) / "1-title.yaml").create
-        file.should_receive(:mtime).and_return(notebook.last_pulled_at)
+        file.should_receive(:mtime).and_return(notebook.last_updated_at)
 
         page = Page.new(:notebook => notebook, :local_file => file)
         page.should_not be_changed
+      end
+    end
+
+    describe "push" do
+      it "should push the page's remote attributes to unfuddle" do
+        notebook = Notebook.new('http://test.unfuddle.com')
+        stub_request(:put, notebook["pages/1"].url.to_s).to_return(:body => '')
+
+        page = Page.new(:notebook => notebook, :id => 1)
+        page.push
+      end
+    end
+
+    describe "remote_attributes" do
+      it "should be the attributes that can be put to unfuddle" do
+        expected_attributes = {
+          :title => 'This is a title',
+          :body => 'This is a body',
+          :message => 'This is a message'
+        }
+
+        page = Page.new(expected_attributes.merge(:id => 1))
+        page.remote_attributes.should == expected_attributes
       end
     end
   end

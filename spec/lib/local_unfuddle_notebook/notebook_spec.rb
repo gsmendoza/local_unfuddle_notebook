@@ -2,7 +2,7 @@ require 'spec_helper'
 
 module LocalUnfuddleNotebook
   describe Notebook do
-    let :last_pulled_at do
+    let :last_updated_at do
       Time.now
     end
 
@@ -13,17 +13,24 @@ module LocalUnfuddleNotebook
         :password => '12345678',
         :project_id => 15,
         :notebook_id => 11,
-        :last_pulled_at => last_pulled_at
+        :last_updated_at => last_updated_at,
+        :protocol => 'https'
       }
     end
 
     describe "with_attributes(settings)" do
       it "should build a new notebook with the given settings" do
         notebook = Notebook.with_attributes(attributes)
-        notebook.url.should == "http://hmsinc.unfuddle.com/api/v1/projects/15/notebooks/11"
+        notebook.url.should == "https://hmsinc.unfuddle.com/api/v1/projects/15/notebooks/11"
         notebook.user.should == 'gsmendoza'
         notebook.password.should == '12345678'
-        notebook.last_pulled_at.should == last_pulled_at
+        notebook.last_updated_at.should == last_updated_at
+        notebook.protocol.should == 'https'
+      end
+
+      it "should set the protocol to http by default" do
+        notebook = Notebook.with_attributes({})
+        notebook.protocol.should == 'http'
       end
     end
 
@@ -65,18 +72,18 @@ module LocalUnfuddleNotebook
         Pow(Notebook.local_pages_path).should_not exist
       end
 
-      it "should set the last_pulled_at time of the notebook to now" do
+      it "should set the last_updated_at time of the notebook to now" do
         time_now = Time.now
         Time.stub(:now).and_return(time_now)
 
         notebook = Notebook.with_attributes(attributes)
-        notebook.last_pulled_at = nil
+        notebook.last_updated_at = nil
 
         stub_request(:get, notebook.url_with_basic_auth('pages/unique')).
           to_return(:body => Pow('spec/fixtures/webmock/unique_pages_with_single_page.xml').read)
 
         notebook.pull
-        notebook.last_pulled_at.should == time_now
+        notebook.last_updated_at.should == time_now
       end
 
       it "should save the local attributes of the notebook" do
@@ -96,7 +103,8 @@ module LocalUnfuddleNotebook
           :password => '12345678',
           :project_id => 15,
           :notebook_id => 11,
-          :last_pulled_at => time_now
+          :last_updated_at => time_now,
+          :protocol => 'https'
         }
 
         Pow(Notebook.attributes_path).should be_a_file
@@ -170,14 +178,14 @@ module LocalUnfuddleNotebook
         notebook = Notebook.with_attributes(attributes)
 
         notebook.url_with_basic_auth('pages/unique').should ==
-          "http://gsmendoza:12345678@hmsinc.unfuddle.com/api/v1/projects/15/notebooks/11/pages/unique"
+          "https://gsmendoza:12345678@hmsinc.unfuddle.com/api/v1/projects/15/notebooks/11/pages/unique"
       end
     end
 
     describe "local_attributes" do
       it "should be the attributes of the notebook intended for saving" do
         notebook = Notebook.with_attributes(attributes)
-        notebook.last_pulled_at = time_now = Time.now
+        notebook.last_updated_at = time_now = Time.now
 
         notebook.local_attributes.should == {
           :subdomain => 'hmsinc',
@@ -185,7 +193,8 @@ module LocalUnfuddleNotebook
           :password => '12345678',
           :project_id => 15,
           :notebook_id => 11,
-          :last_pulled_at => time_now
+          :last_updated_at => time_now,
+          :protocol => 'https'
         }
       end
     end
@@ -232,6 +241,40 @@ module LocalUnfuddleNotebook
         local_page.notebook.should == notebook
         local_page.local_file.name(true).should == "1-this-is-a-title.yaml"
         local_page.title.should == 'This is a title'
+      end
+    end
+
+    describe "push" do
+      it "should upload a changed page to unfuddle" do
+        page = Page.new
+        page.should_receive(:changed?).and_return(true)
+        page.should_receive(:message=).with("message")
+        page.should_receive(:push)
+
+        notebook = Notebook.with_attributes(attributes)
+        notebook.should_receive(:local_pages).and_return([page])
+
+        notebook.push 'message'
+      end
+
+      it "should update and save the last_updated_at timestamp" do
+        Pow(Notebook.local_pages_path).create_directory
+
+        time_now = Time.now
+        Time.stub(:now).and_return(time_now)
+
+        notebook = Notebook.with_attributes(attributes)
+        notebook.push 'message'
+        notebook.last_updated_at.should == time_now
+
+        YAML::load(Pow(Notebook.attributes_path).read)[:last_updated_at].should == time_now
+      end
+    end
+
+    describe "protocol" do
+      it "should come from the url" do
+        notebook = Notebook.new("https://hmsinc.unfuddle.com")
+        notebook.protocol.should == 'https'
       end
     end
   end

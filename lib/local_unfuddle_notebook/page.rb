@@ -14,7 +14,7 @@ module LocalUnfuddleNotebook
     end
 
     def changed?
-      notebook.last_pulled_at < local_file.mtime
+      notebook.last_updated_at < local_file.mtime
     end
 
     def local_attributes
@@ -22,6 +22,18 @@ module LocalUnfuddleNotebook
         :body => body,
         :id => id,
         :title => title
+      }
+    end
+
+    def push
+      notebook["/pages/#{id}"].put :page => remote_attributes
+    end
+
+    def remote_attributes
+      {
+        :title => title,
+        :body => body,
+        :message => message
       }
     end
 

@@ -21,14 +21,15 @@ module LocalUnfuddleNotebook
       end
 
       def with_attributes(attributes)
-        url = "http://#{attributes[:subdomain]}.unfuddle.com/api/v1/projects/#{attributes[:project_id]}/notebooks/#{attributes[:notebook_id]}"
+        attributes[:protocol] ||= 'http'
+        url = "#{attributes[:protocol]}://#{attributes[:subdomain]}.unfuddle.com/api/v1/projects/#{attributes[:project_id]}/notebooks/#{attributes[:notebook_id]}"
         Notebook.new(url, attributes[:username], attributes[:password]).tap do |notebook|
-          notebook.last_pulled_at = attributes[:last_pulled_at]
+          notebook.last_updated_at = attributes[:last_updated_at]
         end
       end
     end
 
-    attr_accessor :last_pulled_at
+    attr_accessor :last_updated_at
 
     def local_attributes
       {
@@ -37,7 +38,8 @@ module LocalUnfuddleNotebook
         :password => password,
         :project_id => project_id,
         :notebook_id => notebook_id,
-        :last_pulled_at => last_pulled_at
+        :last_updated_at => last_updated_at,
+        :protocol => protocol
       }
     end
 
@@ -58,6 +60,10 @@ module LocalUnfuddleNotebook
       url.match(%r{projects/(\d+)})[1].to_i
     end
 
+    def protocol
+      url.match(%r{^(\w*)://})[1]
+    end
+
     def pull
       if Pow(self.class.local_pages_path).exists?
         Pow(self.class.local_pages_path).delete!
@@ -67,8 +73,18 @@ module LocalUnfuddleNotebook
         page.save
       end
 
-      self.last_pulled_at = Time.now
+      self.last_updated_at = Time.now
 
+      self.update_attributes_file
+    end
+
+    def push(message)
+      local_pages.select{|page| page.changed?}.each do |page|
+        page.message = message
+        page.push
+      end
+
+      self.last_updated_at = Time.now
       self.update_attributes_file
     end
 
@@ -90,7 +106,7 @@ module LocalUnfuddleNotebook
     end
 
     def url_with_basic_auth(suburl)
-      self[suburl].url.sub("http://", "http://#{user}:#{password}@")
+      self[suburl].url.sub("#{protocol}://", "#{protocol}://#{user}:#{password}@")
     end
   end
 end
