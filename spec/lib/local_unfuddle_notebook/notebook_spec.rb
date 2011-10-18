@@ -14,12 +14,13 @@ module LocalUnfuddleNotebook
         :project_id => 15,
         :notebook_id => 11,
         :last_updated_at => last_updated_at,
-        :protocol => 'https'
+        :protocol => 'http'
       }
     end
 
     describe "with_attributes(settings)" do
       it "should build a new notebook with the given settings" do
+        attributes[:protocol] = 'https'
         notebook = Notebook.with_attributes(attributes)
         notebook.url.should == "https://hmsinc.unfuddle.com/api/v1/projects/15/notebooks/11"
         notebook.user.should == 'gsmendoza'
@@ -104,7 +105,7 @@ module LocalUnfuddleNotebook
           :project_id => 15,
           :notebook_id => 11,
           :last_updated_at => time_now,
-          :protocol => 'https'
+          :protocol => 'http'
         }
 
         Pow(Notebook.attributes_path).should be_a_file
@@ -178,7 +179,7 @@ module LocalUnfuddleNotebook
         notebook = Notebook.with_attributes(attributes)
 
         notebook.url_with_basic_auth('pages/unique').should ==
-          "https://gsmendoza:12345678@hmsinc.unfuddle.com/api/v1/projects/15/notebooks/11/pages/unique"
+          "http://gsmendoza:12345678@hmsinc.unfuddle.com/api/v1/projects/15/notebooks/11/pages/unique"
       end
     end
 
@@ -194,7 +195,7 @@ module LocalUnfuddleNotebook
           :project_id => 15,
           :notebook_id => 11,
           :last_updated_at => time_now,
-          :protocol => 'https'
+          :protocol => 'http'
         }
       end
     end
@@ -253,21 +254,16 @@ module LocalUnfuddleNotebook
 
         notebook = Notebook.with_attributes(attributes)
         notebook.should_receive(:local_pages).and_return([page])
-
+        notebook.should_receive :pull
         notebook.push 'message'
       end
 
-      it "should update and save the last_updated_at timestamp" do
+      it "should pull afterwards to update the ids and the last_updated_at" do
         Pow(Notebook.local_pages_path).create_directory
 
-        time_now = Time.now
-        Time.stub(:now).and_return(time_now)
-
         notebook = Notebook.with_attributes(attributes)
+        notebook.should_receive :pull
         notebook.push 'message'
-        notebook.last_updated_at.should == time_now
-
-        YAML::load(Pow(Notebook.attributes_path).read)[:last_updated_at].should == time_now
       end
     end
 

@@ -10,7 +10,7 @@ module LocalUnfuddleNotebook
     has_value :title
 
     def basename
-      "#{id}-#{title.gsub(/\W/, '-')}.yaml".downcase
+      "#{title.gsub(/\W/, '-')}.yaml".downcase
     end
 
     def changed?

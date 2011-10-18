@@ -74,7 +74,6 @@ module LocalUnfuddleNotebook
       end
 
       self.last_updated_at = Time.now
-
       self.update_attributes_file
     end
 
@@ -84,8 +83,7 @@ module LocalUnfuddleNotebook
         page.push
       end
 
-      self.last_updated_at = Time.now
-      self.update_attributes_file
+      pull
     end
 
     def remote_pages

@@ -25,7 +25,7 @@ module LocalUnfuddleNotebook
     describe "basename" do
       it "should be the basename of the page's local file" do
         page = Page.new(:id => 1, :title => 'Testing: Title')
-        page.basename.should == '1-testing--title.yaml'
+        page.basename.should == 'testing--title.yaml'
       end
     end
 
